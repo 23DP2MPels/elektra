@@ -29,7 +29,7 @@
       <div class="d-flex align-center justify-space-between mb-3">
         <div>
           <div class="price syne-font text-primary">
-            €{{ (product.current_price ?? product.price)?.toFixed(2) }}
+            €{{ formattedPrice }}
           </div>
           <div class="text-caption text-medium-emphasis">
             <v-icon size="x-small">mdi-store</v-icon>
@@ -71,9 +71,15 @@ import { computed } from 'vue'
 import { useProductStore } from '@/stores/products'
 import { useAuthStore } from '@/stores/auth'
 import { useSnackbarStore } from '@/stores/snackbar'
+import { formatPrice } from '@/utils/price'
 
 const props = defineProps({
   product: { type: Object, required: true }
+})
+
+const formattedPrice = computed(() => {
+  const p = props.product.current_price ?? props.product.price
+  return formatPrice(p)
 })
 
 const emit = defineEmits(['track-price'])

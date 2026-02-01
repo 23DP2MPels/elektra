@@ -22,7 +22,7 @@
               <v-card-text>
                 <h4 class="syne-font mb-2">{{ product.name }}</h4>
                 <div class="price text-primary syne-font mb-2">
-                  €{{ (product.current_price ?? product.price)?.toFixed(2) }}
+                  €{{ formatPrice(product.current_price ?? product.price) }}
                 </div>
                 <div class="text-caption text-medium-emphasis">
                   <v-icon size="x-small">mdi-store</v-icon>
@@ -76,6 +76,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useProductStore } from '@/stores/products'
+import { formatPrice } from '@/utils/price'
 
 const productStore = useProductStore()
 

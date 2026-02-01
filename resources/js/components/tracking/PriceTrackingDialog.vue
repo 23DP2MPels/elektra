@@ -9,7 +9,7 @@
         <v-alert v-if="selectedProduct" type="info" variant="tonal" class="mb-4">
           <div class="font-weight-bold">{{ selectedProduct.name }}</div>
           <div class="text-caption">
-            Pašreizējā cena: €{{ (selectedProduct.current_price ?? selectedProduct.price)?.toFixed(2) }}
+            Pašreizējā cena: €{{ formatPrice(selectedProduct.current_price ?? selectedProduct.price) }}
           </div>
         </v-alert>
 
@@ -43,6 +43,7 @@
 import { ref } from 'vue'
 import api from '@/services/api'
 import { useSnackbarStore } from '@/stores/snackbar'
+import { formatPrice } from '@/utils/price'
 
 const snackbarStore = useSnackbarStore()
 
