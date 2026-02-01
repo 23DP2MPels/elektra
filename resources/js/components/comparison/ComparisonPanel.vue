@@ -1,11 +1,11 @@
 <template>
-  <v-bottom-sheet v-model="isOpen" max-width="100%" persistent>
+  <v-bottom-sheet :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" max-width="100%" persistent>
     <v-card class="comparison-panel" elevation="24">
       <v-card-title class="d-flex align-center justify-space-between pa-6">
         <div class="syne-font text-h4">
           Salīdzināt preces ({{ productStore.comparedProducts.length }})
         </div>
-        <v-btn icon="mdi-close" variant="text" @click="close"></v-btn>
+        <v-btn icon="mdi-close" variant="text" @click="closePanel"></v-btn>
       </v-card-title>
 
       <v-card-text v-if="productStore.comparedProducts.length > 0" class="pa-6">
@@ -78,14 +78,14 @@ import { computed } from 'vue'
 import { useProductStore } from '@/stores/products'
 import { formatPrice } from '@/utils/price'
 
+const props = defineProps({
+  modelValue: { type: Boolean, default: false }
+})
+const emit = defineEmits(['update:modelValue'])
+
 const productStore = useProductStore()
 
 const placeholderImage = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f0f0f0" width="200" height="200"/%3E%3C/svg%3E'
-
-const isOpen = computed({
-  get: () => productStore.selectedProducts.length > 0,
-  set: (value) => { if (!value) productStore.clearComparison() }
-})
 
 const allSpecs = computed(() => {
   const specs = new Set()
@@ -101,8 +101,11 @@ const getSpecValue = (product, specName) => {
   return spec ? spec.vertiba : 'N/A'
 }
 
-const close = () => { isOpen.value = false }
-const clearAll = () => productStore.clearComparison()
+const closePanel = () => emit('update:modelValue', false)
+const clearAll = () => {
+  productStore.clearComparison()
+  emit('update:modelValue', false)
+}
 </script>
 
 <style scoped>

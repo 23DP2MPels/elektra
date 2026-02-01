@@ -4,7 +4,7 @@
     <v-main>
       <router-view />
     </v-main>
-    <ComparisonPanel />
+    <ComparisonPanel v-model="showComparisonPanel" />
     <PriceTrackingDialog />
     <v-snackbar
       v-model="snackbar.show"
@@ -22,14 +22,20 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, provide } from 'vue'
 import { useSnackbarStore } from '@/stores/snackbar'
+import { useProductStore } from '@/stores/products'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import ComparisonPanel from '@/components/comparison/ComparisonPanel.vue'
 import PriceTrackingDialog from '@/components/tracking/PriceTrackingDialog.vue'
 
 const snackbarStore = useSnackbarStore()
+const productStore = useProductStore()
 const snackbar = computed(() => snackbarStore.snackbar)
+
+const showComparisonPanel = ref(false)
+provide('comparisonCount', computed(() => productStore.selectedProducts.length))
+provide('openComparisonPanel', () => { showComparisonPanel.value = true })
 </script>
 
 <style>

@@ -24,7 +24,16 @@
 
       <v-spacer></v-spacer>
 
-      <div class="d-flex ga-2">
+      <div class="d-flex ga-2 align-center">
+        <v-btn
+          v-if="comparisonCount > 0"
+          variant="flat"
+          color="secondary"
+          @click="openComparisonPanel"
+        >
+          <v-icon start>mdi-compare</v-icon>
+          Salīdzināt izvēlēto ({{ comparisonCount }})
+        </v-btn>
         <template v-if="!authStore.isAuthenticated">
           <v-btn variant="text" color="primary" @click="$router.push('/login')">
             Pieslēgties
@@ -72,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useProductStore } from '@/stores/products'
@@ -82,6 +91,9 @@ const router = useRouter()
 const authStore = useAuthStore()
 const productStore = useProductStore()
 const snackbarStore = useSnackbarStore()
+
+const comparisonCount = inject('comparisonCount')
+const openComparisonPanel = inject('openComparisonPanel', () => {})
 
 const searchQuery = ref('')
 
