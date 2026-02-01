@@ -41,7 +41,7 @@ class TrackedProductController extends Controller
 
         $user = $request->user();
 
-        if ($user->trackedProducts()->where('preces_id', $validated['product_id'])->exists()) {
+        if ($user->trackedProducts()->where('sekotas_preces.preces_id', $validated['product_id'])->exists()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Product is already being tracked'
@@ -70,7 +70,7 @@ class TrackedProductController extends Controller
 
         $user = $request->user();
 
-        if (!$user->trackedProducts()->where('preces_id', $product->preces_id)->exists()) {
+        if (!$user->trackedProducts()->where('sekotas_preces.preces_id', $product->preces_id)->exists()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Product is not being tracked'
