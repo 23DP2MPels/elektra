@@ -1,5 +1,7 @@
 # elektra
 
+**Kur ko darīt?** (kur pievienot pogu, mainīt tekstu, API) → skatīt **[KU_KO_ATBILD.md](KU_KO_ATBILD.md)**.
+
 ## Первый запуск (один раз)
 
 В папке проекта выполни по порядку:
