@@ -4,6 +4,7 @@ import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 import TrackedProductsView from '@/views/TrackedProductsView.vue'
+import AdminView from '@/views/AdminView.vue'
 
 const routes = [
   {
@@ -43,7 +44,7 @@ const routes = [
   {
     path: '/admin',
     name: 'admin',
-    component: PlaceholderView
+    component: AdminView
   },
   {
     path: '/:pathMatch(.*)*',

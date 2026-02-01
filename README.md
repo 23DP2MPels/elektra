@@ -21,7 +21,22 @@ npm install --legacy-peer-deps
 
 # 5. База данных (SQLite) — миграции
 php artisan migrate
+
+# 6. (Neobligāti) Sākotnējie dati + administrators
+php artisan db:seed
 ```
+Pēc `db:seed` vari ienākt kā **administrators**: e-pasts `admin@elektra.test`, parole `password` (vai vērtības no `.env`: `ADMIN_EMAIL`, `ADMIN_PASSWORD`). Administrators var pievienot/dzēst preces, kategorijas, veikalus.
+
+**Padarīt esošu lietotāju par administratoru** (ja jau reģistrējies):  
+`php artisan elektra:make-admin tavs@epasts.com` — pēc tam pieslēdzies ar šo e-pastu.
+
+Ja datu bāze jau ir aizpildīta un vēlies tikai izveidot admin kontu:  
+`php artisan db:seed --class=AdminSeeder`
+
+**Vai datu bāze pārvietosies ar `git pull` uz citu datoru?**  
+Nē. Datu bāzes fails (SQLite u.c.) nav repozitorijā. Uz **cita datora** pēc `git pull` palaid: `php artisan migrate` un `php artisan db:seed` — tad būs jauna DB ar sējēju datiem un admin kontu (`admin@elektra.test` / `password`).
+
+**Administrācija:** pieslēdzies kā administrators → galvenē izvēlne **Administrācija** → lapa `/admin` — preču saraksts ar pogām **Rediģēt** un **Dzēst**, kā arī **Pievienot preci**.
 
 ## Запуск проекта
 
