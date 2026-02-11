@@ -96,9 +96,9 @@ const allSpecs = computed(() => {
 })
 
 const getSpecValue = (product, specName) => {
-  if (!product.specifications) return 'N/A'
+  if (!product.specifications) return ' ' /* N/A */
   const spec = product.specifications.find(s => s.parametrs === specName)
-  return spec ? spec.vertiba : 'N/A'
+  return spec ? spec.vertiba : ' ' /* N/A */
 }
 
 const closePanel = () => emit('update:modelValue', false)
