@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\PriceHistory;
+use App\Models\Specification;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -96,9 +98,49 @@ class ProductController extends Controller
             'modelis' => 'nullable|string|max:255',
             'attels_url' => 'nullable|url',
             'kategorijas_id' => 'required|exists:kategorijas,kategorijas_id',
+            'veikala_id' => 'nullable|exists:veikali,veikala_id',
+            'cena' => 'nullable|numeric|min:0',
+            'specs' => 'nullable|array',
+            'specs.*.parametrs' => 'required_with:specs|string|max:255',
+            'specs.*.vertiba' => 'required_with:specs|string|max:1000',
         ]);
 
-        $product = Product::create($validated);
+        $productData = collect($validated)->only([
+            'nosaukums',
+            'apraksts',
+            'razotajs',
+            'modelis',
+            'attels_url',
+            'kategorijas_id',
+        ])->toArray();
+
+        $product = Product::create($productData);
+
+        if (isset($validated['cena']) && isset($validated['veikala_id'])) {
+            PriceHistory::create([
+                'preces_id' => $product->preces_id,
+                'veikala_id' => $validated['veikala_id'],
+                'cena' => $validated['cena'],
+                'iepriekšējā_cena' => null,
+                'pieejams' => true,
+            ]);
+        }
+
+        if (!empty($validated['specs']) && is_array($validated['specs'])) {
+            foreach ($validated['specs'] as $spec) {
+                if (
+                    isset($spec['parametrs'], $spec['vertiba']) &&
+                    $spec['parametrs'] !== '' &&
+                    $spec['vertiba'] !== ''
+                ) {
+                    Specification::create([
+                        'preces_id' => $product->preces_id,
+                        'parametrs' => $spec['parametrs'],
+                        'vertiba' => $spec['vertiba'],
+                    ]);
+                }
+            }
+        }
 
         return response()->json([
             'success' => true,
@@ -116,9 +158,60 @@ class ProductController extends Controller
             'modelis' => 'nullable|string|max:255',
             'attels_url' => 'nullable|url',
             'kategorijas_id' => 'sometimes|exists:kategorijas,kategorijas_id',
+            'veikala_id' => 'sometimes|exists:veikali,veikala_id',
+            'cena' => 'sometimes|numeric|min:0',
+            'specs' => 'sometimes|array',
+            'specs.*.parametrs' => 'required_with:specs|string|max:255',
+            'specs.*.vertiba' => 'required_with:specs|string|max:1000',
         ]);
 
-        $product->update($validated);
+        $productData = collect($validated)->only([
+            'nosaukums',
+            'apraksts',
+            'razotajs',
+            'modelis',
+            'attels_url',
+            'kategorijas_id',
+        ])->toArray();
+
+        if (!empty($productData)) {
+            $product->update($productData);
+        }
+
+        if (array_key_exists('cena', $validated)) {
+            $latest = $product->priceHistory()->latest()->first();
+            $storeId = $validated['veikala_id'] ?? ($latest?->veikala_id);
+
+            if ($storeId) {
+                PriceHistory::create([
+                    'preces_id' => $product->preces_id,
+                    'veikala_id' => $storeId,
+                    'cena' => $validated['cena'],
+                    'iepriekšējā_cena' => $latest?->cena,
+                    'pieejams' => true,
+                ]);
+            }
+        }
+
+        if ($request->has('specs')) {
+            $product->specifications()->delete();
+
+            if (is_array($request->specs)) {
+                foreach ($request->specs as $spec) {
+                    if (
+                        isset($spec['parametrs'], $spec['vertiba']) &&
+                        $spec['parametrs'] !== '' &&
+                        $spec['vertiba'] !== ''
+                    ) {
+                        Specification::create([
+                            'preces_id' => $product->preces_id,
+                            'parametrs' => $spec['parametrs'],
+                            'vertiba' => $spec['vertiba'],
+                        ]);
+                    }
+                }
+            }
+        }
 
         return response()->json([
             'success' => true,

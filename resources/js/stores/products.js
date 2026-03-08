@@ -15,13 +15,50 @@ export const useProductStore = defineStore('products', () => {
     search: ''
   })
 
+  function normalize(str) {
+    return (str || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9āčēģīķļņōŗšūž\s]/g, ' ')
+  }
+
+  function makeChunks(str, size = 3) {
+    const s = normalize(str).replace(/\s+/g, ' ').trim()
+    if (s.length <= size) return new Set(s ? [s] : [])
+    const out = new Set()
+    for (let i = 0; i <= s.length - size; i++) {
+      out.add(s.slice(i, i + size))
+    }
+    return out
+  }
+
+  function fuzzyMatch(text, query) {
+    const normText = normalize(text)
+    const normQuery = normalize(query)
+    if (!normQuery) return true
+    if (normText.includes(normQuery)) return true
+
+    const textChunks = makeChunks(normText)
+    const queryChunks = makeChunks(normQuery)
+    if (queryChunks.size === 0) return true
+
+    let matches = 0
+    queryChunks.forEach(chunk => {
+      if (textChunks.has(chunk)) matches++
+    })
+
+    const ratio = matches / queryChunks.size
+    return ratio >= 0.4
+  }
+
   const filteredProducts = computed(() => {
     let filtered = [...products.value]
     if (filters.value.search) {
-      const searchLower = filters.value.search.toLowerCase()
+      const query = filters.value.search
       filtered = filtered.filter(p =>
-        (p.name || '').toLowerCase().includes(searchLower) ||
-        (p.category?.name || '').toLowerCase().includes(searchLower)
+        fuzzyMatch(p.name || '', query) ||
+        fuzzyMatch(p.category?.name || p.category?.nosaukums || '', query)
       )
     }
     if (filters.value.category) {
@@ -90,12 +127,36 @@ export const useProductStore = defineStore('products', () => {
     const index = selectedProducts.value.indexOf(productId)
     if (index > -1) {
       selectedProducts.value.splice(index, 1)
-    } else {
-      if (selectedProducts.value.length < 4) {
-        selectedProducts.value.push(productId)
-      } else {
-        throw new Error('Maksimums 4 preces salīdzināšanai!')
+      return
+    }
+
+    const product = products.value.find(
+      p => (p.preces_id || p.id) === productId
+    )
+
+    if (!product) {
+      return
+    }
+
+    if (selectedProducts.value.length > 0) {
+      const firstProduct = products.value.find(
+        p => (p.preces_id || p.id) === selectedProducts.value[0]
+      )
+
+      if (
+        firstProduct &&
+        firstProduct.kategorijas_id &&
+        product.kategorijas_id &&
+        firstProduct.kategorijas_id !== product.kategorijas_id
+      ) {
+        throw new Error('Var salīdzināt tikai preces no vienas apakškategorijas.')
       }
+    }
+
+    if (selectedProducts.value.length < 4) {
+      selectedProducts.value.push(productId)
+    } else {
+      throw new Error('Maksimums 4 preces salīdzināšanai!')
     }
   }
 

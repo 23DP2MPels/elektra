@@ -2,23 +2,36 @@ import { createRouter, createWebHistory } from 'vue-router'
 import ProductsView from '@/components/ProductsView.vue'
 import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
-import PlaceholderView from '@/views/PlaceholderView.vue'
+import ProfileView from '@/views/ProfileView.vue'
 import TrackedProductsView from '@/views/TrackedProductsView.vue'
 import AdminView from '@/views/AdminView.vue'
+import CatalogView from '@/views/CatalogView.vue'
+import GroupCategoriesView from '@/views/GroupCategoriesView.vue'
+import AdminCategoriesView from '@/views/AdminCategoriesView.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'home',
-    redirect: { path: '/products' }
+    redirect: { path: '/kategorijas' }
   },
   {
-    path: '',
-    redirect: { path: '/products' }
+    path: '/kategorijas',
+    name: 'categories',
+    component: CatalogView
+  },
+  {
+    path: '/:groupSlug/kategorijas',
+    name: 'group-categories',
+    component: GroupCategoriesView
   },
   {
     path: '/products',
     name: 'products',
+    component: ProductsView
+  },
+  {
+    path: '/:groupSlug/products',
+    name: 'group-products',
     component: ProductsView
   },
   {
@@ -34,7 +47,7 @@ const routes = [
   {
     path: '/profile',
     name: 'profile',
-    component: PlaceholderView
+    component: ProfileView
   },
   {
     path: '/tracked-products',
@@ -47,9 +60,14 @@ const routes = [
     component: AdminView
   },
   {
+    path: '/admin/categories',
+    name: 'admin-categories',
+    component: AdminCategoriesView
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
-    redirect: { path: '/products' }
+    redirect: { path: '/kategorijas' }
   }
 ]
 

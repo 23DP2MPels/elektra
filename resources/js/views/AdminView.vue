@@ -59,6 +59,14 @@
               <v-text-field v-model="form.razotajs" label="Ražotājs" variant="outlined" density="comfortable"></v-text-field>
               <v-text-field v-model="form.modelis" label="Modelis" variant="outlined" density="comfortable"></v-text-field>
               <v-text-field v-model="form.attels_url" label="Attēla URL" variant="outlined" density="comfortable"></v-text-field>
+              <v-text-field
+                v-model="form.cena"
+                label="Cena (€)"
+                variant="outlined"
+                density="comfortable"
+                type="number"
+                step="0.01"
+              ></v-text-field>
               <v-select
                 v-model="form.kategorijas_id"
                 :items="categories"
@@ -69,6 +77,46 @@
                 density="comfortable"
                 :rules="[v => v != null && v !== '' || 'Izvēlieties kategoriju']"
               ></v-select>
+              <v-select
+                v-model="form.veikala_id"
+                :items="stores"
+                item-title="nosaukums"
+                item-value="veikala_id"
+                label="Veikals"
+                variant="outlined"
+                density="comfortable"
+                :rules="[v => v != null && v !== '' || 'Izvēlieties veikalu']"
+              ></v-select>
+
+              <v-divider class="my-4"></v-divider>
+              <div class="mb-2 d-flex align-center justify-space-between">
+                <span class="text-subtitle-1 font-weight-medium">Specifikācijas</span>
+                <v-btn size="small" variant="text" color="primary" @click="addSpecRow">
+                  <v-icon start>mdi-plus</v-icon>
+                  Pievienot parametru
+                </v-btn>
+              </div>
+              <v-row v-for="(spec, index) in form.specs" :key="index" class="mb-2" align="center">
+                <v-col cols="5">
+                  <v-text-field
+                    v-model="spec.parametrs"
+                    label="Parametrs (piem., &quot;Ekrāna izmērs&quot;)"
+                    variant="outlined"
+                    density="comfortable"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="6">
+                  <v-text-field
+                    v-model="spec.vertiba"
+                    label="Vērtība (piem., &quot;6.7&quot;)"
+                    variant="outlined"
+                    density="comfortable"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="1" class="text-right">
+                  <v-btn icon="mdi-delete" variant="text" color="error" @click="removeSpecRow(index)"></v-btn>
+                </v-col>
+              </v-row>
             </v-form>
           </v-card-text>
           <v-card-actions>
@@ -112,6 +160,7 @@ const saving = ref(false)
 const deleting = ref(false)
 const products = ref([])
 const categories = ref([])
+const stores = ref([])
 const editDialog = ref(false)
 const deleteDialog = ref(false)
 const editingProduct = ref(null)
@@ -124,7 +173,10 @@ const form = reactive({
   razotajs: '',
   modelis: '',
   attels_url: '',
-  kategorijas_id: null
+  kategorijas_id: null,
+  veikala_id: null,
+  cena: '',
+  specs: []
 })
 
 async function loadProducts() {
@@ -146,6 +198,15 @@ async function loadCategories() {
   }
 }
 
+async function loadStores() {
+  try {
+    const res = await api.get('/stores')
+    stores.value = Array.isArray(res.data) ? res.data : (res.data?.data ?? [])
+  } catch (err) {
+    stores.value = []
+  }
+}
+
 function openEditDialog(product = null) {
   editingProduct.value = product
   form.nosaukums = product?.nosaukums ?? product?.name ?? ''
@@ -154,6 +215,14 @@ function openEditDialog(product = null) {
   form.modelis = product?.modelis ?? ''
   form.attels_url = product?.attels_url ?? product?.image_url ?? ''
   form.kategorijas_id = product?.kategorijas_id ?? product?.category?.kategorijas_id ?? (categories.value[0]?.kategorijas_id ?? null)
+  form.veikala_id = product?.store?.veikala_id ?? (stores.value[0]?.veikala_id ?? null)
+  form.cena = product?.price ?? product?.current_price ?? ''
+  form.specs = Array.isArray(product?.specifications)
+    ? product.specifications.map(s => ({
+        parametrs: s.parametrs,
+        vertiba: s.vertiba
+      }))
+    : []
   editDialog.value = true
 }
 
@@ -167,15 +236,35 @@ async function saveProduct() {
     snackbarStore.showError('Izvēlieties kategoriju')
     return
   }
+  if (!form.cena || Number.isNaN(Number(form.cena))) {
+    snackbarStore.showError('Ievadiet korektu cenu (piem., 199.99)')
+    return
+  }
+  if (!form.veikala_id) {
+    snackbarStore.showError('Izvēlieties veikalu')
+    return
+  }
   saving.value = true
   try {
+    const specsPayload = Array.isArray(form.specs)
+      ? form.specs
+          .filter(s => s.parametrs?.trim() && s.vertiba?.trim())
+          .map(s => ({
+            parametrs: s.parametrs.trim(),
+            vertiba: s.vertiba.trim()
+          }))
+      : []
+
     const payload = {
       nosaukums: form.nosaukums.trim(),
       apraksts: form.apraksts?.trim() || null,
       razotajs: form.razotajs?.trim() || null,
       modelis: form.modelis?.trim() || null,
       attels_url: form.attels_url?.trim() || null,
-      kategorijas_id: form.kategorijas_id
+      kategorijas_id: form.kategorijas_id,
+      veikala_id: form.veikala_id,
+      cena: Number(form.cena),
+      specs: specsPayload
     }
     if (editingProduct.value) {
       const id = editingProduct.value.preces_id ?? editingProduct.value.id
@@ -193,6 +282,14 @@ async function saveProduct() {
   } finally {
     saving.value = false
   }
+}
+
+function addSpecRow() {
+  form.specs.push({ parametrs: '', vertiba: '' })
+}
+
+function removeSpecRow(index) {
+  form.specs.splice(index, 1)
 }
 
 function confirmDelete(product) {
@@ -220,8 +317,9 @@ async function doDelete() {
 onMounted(async () => {
   if (authStore.isAdmin) {
     loading.value = true
-    await Promise.all([loadProducts(), loadCategories()])
+    await Promise.all([loadProducts(), loadCategories(), loadStores()])
     loading.value = false
   }
 })
 </script>
+

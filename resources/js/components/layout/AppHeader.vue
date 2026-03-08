@@ -2,7 +2,7 @@
   <v-app-bar elevation="2" color="white">
     <v-container fluid class="d-flex align-center">
       <v-app-bar-title>
-        <router-link to="/" class="logo syne-font text-decoration-none">
+        <router-link to="/kategorijas" class="logo syne-font text-decoration-none">
           ELEKTRA
         </router-link>
       </v-app-bar-title>
@@ -67,6 +67,10 @@
                 <template v-slot:prepend><v-icon icon="mdi-shield-account"></v-icon></template>
                 <v-list-item-title>Administrācija</v-list-item-title>
               </v-list-item>
+              <v-list-item v-if="authStore.isAdmin" @click="$router.push('/admin/categories')">
+                <template v-slot:prepend><v-icon icon="mdi-tag-multiple"></v-icon></template>
+                <v-list-item-title>Kategorijas</v-list-item-title>
+              </v-list-item>
               <v-divider></v-divider>
               <v-list-item @click="handleLogout">
                 <template v-slot:prepend><v-icon icon="mdi-logout"></v-icon></template>
@@ -107,7 +111,7 @@ const handleSearch = () => {
 const handleLogout = async () => {
   await authStore.logout()
   snackbarStore.showSuccess('Jūs esat veiksmīgi izgājis')
-  router.push('/')
+  router.push('/kategorijas')
 }
 </script>
 

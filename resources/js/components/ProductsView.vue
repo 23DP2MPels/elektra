@@ -108,13 +108,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useProductStore } from '@/stores/products'
 import ProductCard from '@/components/products/ProductCard.vue'
 import PriceTrackingDialog from '@/components/tracking/PriceTrackingDialog.vue'
 import api from '@/services/api'
 
 const productStore = useProductStore()
+const route = useRoute()
 
 const categories = ref([])
 const stores = ref([])
@@ -182,7 +184,31 @@ onMounted(async () => {
     fetchCategories(),
     fetchStores()
   ])
+
+  if (route.query.category) {
+    const categoryId = Number(route.query.category)
+    if (!Number.isNaN(categoryId)) {
+      filters.category = categoryId
+      applyFilters()
+    }
+  }
 })
+
+watch(
+  () => route.query.category,
+  (newVal) => {
+    if (!newVal) {
+      filters.category = ''
+      applyFilters()
+      return
+    }
+    const categoryId = Number(newVal)
+    if (!Number.isNaN(categoryId)) {
+      filters.category = categoryId
+      applyFilters()
+    }
+  }
+)
 </script>
 
 <style scoped>
